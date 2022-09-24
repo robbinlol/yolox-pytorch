@@ -22,14 +22,15 @@ class YOLOXHead(nn.Module):
 
         for i in range(len(in_channels)):
             self.stems.append(BaseConv(in_channels = int(in_channels[i] * width), out_channels = int(256 * width), ksize = 1, stride = 1, act = act))
+            
             self.cls_convs.append(nn.Sequential(*[
                 Conv(in_channels = int(256 * width), out_channels = int(256 * width), ksize = 3, stride = 1, act = act), 
                 Conv(in_channels = int(256 * width), out_channels = int(256 * width), ksize = 3, stride = 1, act = act), 
             ]))
+            
             self.cls_preds.append(
                 nn.Conv2d(in_channels = int(256 * width), out_channels = num_classes, kernel_size = 1, stride = 1, padding = 0)
-            )
-            
+            )   
 
             self.reg_convs.append(nn.Sequential(*[
                 Conv(in_channels = int(256 * width), out_channels = int(256 * width), ksize = 3, stride = 1, act = act), 
@@ -211,7 +212,7 @@ class YOLOPAFPN(nn.Module):
         #-------------------------------------------#
         P3_downsample   = torch.cat([P3_downsample, P4], 1) 
         #-------------------------------------------#
-        #   40, 40, 256 -> 40, 40, 512
+        #   40, 40, 512 -> 40, 40, 512
         #-------------------------------------------#
         P4_out          = self.C3_n3(P3_downsample) 
 
