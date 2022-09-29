@@ -20,7 +20,12 @@ annotation_mode     = 0
 #   那么就是因为classes没有设定正确
 #   仅在annotation_mode为0和2的时候有效
 #-------------------------------------------------------------------#
-classes_path        = 'model_data/voc_classes.txt'
+#classes_path        = 'model_data/voc_classes.txt'
+
+# ! carDD类别路径
+classes_path        = 'model_data/cardd_classes.txt'
+
+
 #--------------------------------------------------------------------------------------------------------------------------------#
 #   trainval_percent用于指定(训练集+验证集)与测试集的比例，默认情况下 (训练集+验证集):测试集 = 9:1
 #   train_percent用于指定(训练集+验证集)中训练集与验证集的比例，默认情况下 训练集:验证集 = 9:1
@@ -32,7 +37,10 @@ train_percent       = 0.9
 #   指向VOC数据集所在的文件夹
 #   默认指向根目录下的VOC数据集
 #-------------------------------------------------------#
-VOCdevkit_path  = 'VOCdevkit'
+# VOCdevkit_path  = 'VOCdevkit'
+
+# ! carDD数据集所在文件夹
+VOCdevkit_path  = '/root/autodl-tmp/'
 
 VOCdevkit_sets  = [('2007', 'train'), ('2007', 'val')]
 classes, _      = get_classes(classes_path)
@@ -135,6 +143,9 @@ if __name__ == "__main__":
         tableData = [
             classes, str_nums
         ]
+        # import logging
+
+        # logging.critical(classes)
         colWidths = [0]*len(tableData)
         len1 = 0
         for i in range(len(tableData)):

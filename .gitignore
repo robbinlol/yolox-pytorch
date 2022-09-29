@@ -138,5 +138,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+2007_train.txt
+2007_val.txt
+img/abandoned-car-flat-tire-wheel-677521360.jpg
+img/abandoned-car-rust-rotten-body-flat-1814071184.jpg
+img/abandoned-car-trucks-393557.jpg
+img/abandoned-trailer-cracked-glass-window-scratched-1338827243.jpg
+img/abandoned-white-rusty-car-close-538681072.jpg
+img_out/
+single_detect.jpg
 learn_model.py
 img/

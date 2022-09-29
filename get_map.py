@@ -30,6 +30,7 @@ if __name__ == "__main__":
     #   一般情况下与训练和预测所用的classes_path一致即可
     #--------------------------------------------------------------------------------------#
     # classes_path    = 'model_data/voc_classes.txt'
+
     classes_path    = 'model_data/cardd_classes.txt'
     #--------------------------------------------------------------------------------------#
     #   MINOVERLAP用于指定想要获得的mAP0.x，mAP0.x的意义是什么请同学们百度一下。
@@ -72,6 +73,7 @@ if __name__ == "__main__":
     # VOCdevkit_path  = 'VOCdevkit'
     VOCdevkit_path  = '/home/haoran/github_projects/conver_data'
 
+    VOCdevkit_path  = '/root/autodl-tmp/'
     #-------------------------------------------------------#
     #   结果输出的文件夹，默认为map_out
     #-------------------------------------------------------#
