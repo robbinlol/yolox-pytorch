@@ -28,6 +28,7 @@ import numpy as np
                 (Right,Bottom)
 '''
 
+
 def log_average_miss_rate(precision, fp_cumsum, num_images):
     """
         log-average miss rate:
@@ -238,6 +239,7 @@ def draw_plot_func(dictionary, n_classes, window_title, plot_title, x_label, out
             if i == (len(sorted_values)-1): # largest bar
                 adjust_axes(r, t, fig, axes)
     # set window title
+    # fig = plt.get_current_fig_manager()
     fig.canvas.set_window_title(window_title)
     # write classes in y axis
     tick_font_size = 12
@@ -606,6 +608,7 @@ def get_map(MINOVERLAP, draw_plot, score_threhold=0.5, path = './map_out'):
                 plt.fill_between(area_under_curve_x, 0, area_under_curve_y, alpha=0.2, edgecolor='r')
 
                 fig = plt.gcf()
+                # fig = plt.get_current_fig_manager()
                 fig.canvas.set_window_title('AP ' + class_name)
 
                 plt.title('class: ' + text)
@@ -782,7 +785,7 @@ def get_map(MINOVERLAP, draw_plot, score_threhold=0.5, path = './map_out'):
         plot_title = "mAP = {0:.2f}%".format(mAP*100)
         x_label = "Average Precision"
         output_path = RESULTS_FILES_PATH + "/mAP.png"
-        to_show = True
+        to_show = False 
         plot_color = 'royalblue'
         draw_plot_func(
             ap_dictionary,

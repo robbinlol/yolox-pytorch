@@ -21,8 +21,16 @@ map_mode            = 0
 #-------------------------------------------------------#
 #   指向了验证集标签与图片路径
 #-------------------------------------------------------#
-cocoGt_path         = 'coco_dataset/annotations/instances_val2017.json'
-dataset_img_path    = 'coco_dataset/val2017'
+
+# cocoGt_path         = 'coco_dataset/annotations/instances_val2017.json'
+# dataset_img_path    = 'coco_dataset/val2017'
+
+
+# ! carDD 测试集json地址
+cocoGt_path         = '/home/haoran/github_projects/conver_data/cardd_test/test.json'
+dataset_img_path    = '/home/haoran/github_projects/conver_data/cardd_test'
+
+
 #-------------------------------------------------------#
 #   结果输出的文件夹，默认为map_out
 #-------------------------------------------------------#
