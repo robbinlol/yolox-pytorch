@@ -1,6 +1,7 @@
 #-------------------------------------#
 #       对数据集进行训练
 #-------------------------------------#
+from asyncio import FastChildWatcher
 import datetime
 import os
 
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     #------------------------------------------------------#
     #   所使用的YoloX的版本。nano、tiny、s、m、l、x
     #------------------------------------------------------#
-    phi             = 's'
+    phi             = 'm'
     #------------------------------------------------------------------#
     #   mosaic              马赛克数据增强。
     #   mosaic_prob         每个step有多少概率使用mosaic数据增强，默认50%。
@@ -173,8 +174,8 @@ if __name__ == "__main__":
     #------------------------------------------------------------------#
     # UnFreeze_Epoch      = 300
     #Unfreeze_batch_size = 8
-    # ! 从头训练，增大batch_size (换32batch_size 开始gpu使用率大，后面为0？为什么)
-    UnFreeze_Epoch      = 100 # ! adam 训练轮数
+
+    UnFreeze_Epoch      = 300 # ! adam 训练轮数 100 , sgd: 300 epoch
     Unfreeze_batch_size = 16
     #------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
@@ -192,14 +193,15 @@ if __name__ == "__main__":
     #   Init_lr         模型的最大学习率
     #   Min_lr          模型的最小学习率，默认为最大学习率的0.01
     #------------------------------------------------------------------#
-    # Init_lr             = 1e-2
-
-    # ! adam 训练的配置参数
-    Init_lr             = 1e-3
+    Init_lr             = 1e-2
     Min_lr              = Init_lr * 0.01
-    optimizer_type      = "adam"
-    momentum            = 0.937
-    weight_decay        = 0
+    
+    # ! adam 训练的配置参数
+    # Init_lr             = 1e-2
+    
+    # optimizer_type      = "adam"
+    # momentum            = 0.937
+    # weight_decay        = 0
     #------------------------------------------------------------------#
     #   optimizer_type  使用到的优化器种类，可选的有adam、sgd
     #                   当使用Adam优化器时建议设置  Init_lr=1e-3
@@ -208,9 +210,9 @@ if __name__ == "__main__":
     #   weight_decay    权值衰减，可防止过拟合
     #                   adam会导致weight_decay错误，使用adam时建议设置为0。
     #------------------------------------------------------------------#
-    # optimizer_type      = "sgd"
-    # momentum            = 0.937
-    # weight_decay        = 5e-4
+    optimizer_type      = "sgd"
+    momentum            = 0.937
+    weight_decay        = 5e-4
     #------------------------------------------------------------------#
     #   lr_decay_type   使用到的学习率下降方式，可选的有step、cos
     #------------------------------------------------------------------#
@@ -222,7 +224,8 @@ if __name__ == "__main__":
     #------------------------------------------------------------------#
     #   save_dir        权值与日志文件保存的文件夹
     #------------------------------------------------------------------#
-    save_dir            = '/root/autodl-tmp/logs'
+    save_dir            = 'logs'
+    
     #------------------------------------------------------------------#
     #   eval_flag       是否在训练时进行评估，评估对象为验证集
     #                   安装pycocotools库后，评估体验更佳。
@@ -239,7 +242,7 @@ if __name__ == "__main__":
     #                   开启后会加快数据读取速度，但是会占用更多内存
     #                   内存较小的电脑可以设置为2或者0  
     #------------------------------------------------------------------#
-    num_workers         = 4
+    num_workers         = 8
 
     #----------------------------------------------------#
     #   获得图片路径和标签
@@ -360,6 +363,11 @@ if __name__ == "__main__":
         train_lines = f.readlines()
     with open(val_annotation_path, encoding='utf-8') as f:
         val_lines   = f.readlines()
+
+    # import logging
+    # line = train_lines.split()
+    # logging.critical(line[0], line[1])
+
     num_train   = len(train_lines)
     num_val     = len(val_lines)
      

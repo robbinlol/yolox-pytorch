@@ -149,3 +149,6 @@ img_out/
 single_detect.jpg
 learn_model.py
 img/
+
+logs/
+VOCdevkit/

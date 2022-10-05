@@ -71,16 +71,16 @@ if __name__ == "__main__":
     #   默认指向根目录下的VOC数据集
     #-------------------------------------------------------#
     # VOCdevkit_path  = 'VOCdevkit'
-    VOCdevkit_path  = '/home/haoran/github_projects/conver_data'
+    VOCdevkit_path  = '/home/jinhaoran/CARDD'
 
-    VOCdevkit_path  = '/root/autodl-tmp/'
+    # VOCdevkit_path  = '/root/autodl-tmp/'
     #-------------------------------------------------------#
     #   结果输出的文件夹，默认为map_out
     #-------------------------------------------------------#
     map_out_path    = 'map_out'
 
     # image_ids = open(os.path.join(VOCdevkit_path, "VOC2007/ImageSets/Main/test.txt")).read().strip().split()
-    image_ids = open(os.path.join(VOCdevkit_path, 'Main/test.txt')).read().strip().split()
+    image_ids = open(os.path.join(VOCdevkit_path, 'ImageSets/Main/test.txt')).read().strip().split()
 
     if not os.path.exists(map_out_path):
         os.makedirs(map_out_path)
@@ -101,7 +101,7 @@ if __name__ == "__main__":
         print("Get predict result.")
         for image_id in tqdm(image_ids):
             # image_path  = os.path.join(VOCdevkit_path, "VOC2007/JPEGImages/"+image_id+".jpg")
-            image_path  = os.path.join(VOCdevkit_path, "cardd_test/test_data/"+image_id+".jpg")
+            image_path  = os.path.join(VOCdevkit_path, "JPEGImages/"+ image_id + ".jpg")
             image       = Image.open(image_path)
             if map_vis:
                 image.save(os.path.join(map_out_path, "images-optional/" + image_id + ".jpg"))
@@ -113,7 +113,7 @@ if __name__ == "__main__":
         for image_id in tqdm(image_ids):
             with open(os.path.join(map_out_path, "ground-truth/"+image_id+".txt"), "w") as new_f:
                 # root = ET.parse(os.path.join(VOCdevkit_path, "VOC2007/Annotations/"+image_id+".xml")).getroot()
-                root = ET.parse(os.path.join(VOCdevkit_path, "Annotations/"+image_id+".xml")).getroot()
+                root = ET.parse(os.path.join(VOCdevkit_path, "Annotations/"+ image_id + ".xml")).getroot()
                 for obj in root.findall('object'):
                     difficult_flag = False
                     if obj.find('difficult')!=None:
@@ -141,6 +141,6 @@ if __name__ == "__main__":
         print("Get map done.")
 
     if map_mode == 4:
-        print("Get map.")
+        print("Get COCO map.")
         get_coco_map(class_names = class_names, path = map_out_path)
-        print("Get map done.")
+        print("Get COCO map done.")

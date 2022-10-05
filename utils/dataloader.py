@@ -1,5 +1,6 @@
 from random import sample, shuffle
 
+import os
 import cv2
 import numpy as np
 import torch
@@ -65,7 +66,11 @@ class YoloDataset(Dataset):
         #------------------------------#
         #   读取图像并转换成RGB图像
         #------------------------------#
+        # PATH = '/home/jinhaoran/CARDD/JPEGImages'
+
         image   = Image.open(line[0])
+
+        # print(line[0])
         image   = cvtColor(image)
         #------------------------------#
         #   获得图像的高宽与目标高宽
