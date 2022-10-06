@@ -25,17 +25,9 @@ class YOLO(object):
         #   验证集损失较低不代表mAP较高，仅代表该权值在验证集上泛化性能较好。
         #   如果出现shape不匹配，同时要注意训练时的model_path和classes_path参数的修改
         #--------------------------------------------------------------------------#
-        "model_path"        : 'model_data/best_epoch_weights.pth',
-        "classes_path"      : 'model_data/cardd_classes.txt',
-        
-        # !
-        "model_path"        : '/root/autodl-tmp/logs/best_epoch_weights.pth',
-        "classes_path"      : 'model_data/cardd_classes.txt',
-        # !
+        "model_path"        : '/home/jinhaoran/exp_data/1005_300epoch_sgd_log_out/best_epoch_weights.pth',
+        "classes_path"      : '/home/jinhaoran/yolox-pytorch/model_data/cardd_classes.txt',
 
-
-        # "model_path"        : 'model_data/yolox_s.pth',
-        # "classes_path"      : 'model_data/coco_classes.txt',
         #---------------------------------------------------------------------#
         #   输入图片的大小，必须为32的倍数。
         #---------------------------------------------------------------------#
@@ -43,7 +35,7 @@ class YOLO(object):
         #---------------------------------------------------------------------#
         #   所使用的YoloX的版本。nano、tiny、s、m、l、x
         #---------------------------------------------------------------------#
-        "phi"               : 's',
+        "phi"               : 'm',
         #---------------------------------------------------------------------#
         #   只有得分大于置信度的预测框会被保留下来
         #---------------------------------------------------------------------#
@@ -56,7 +48,7 @@ class YOLO(object):
         #   该变量用于控制是否使用letterbox_image对输入图像进行不失真的resize，
         #   在多次测试后，发现关闭letterbox_image直接resize的效果更好
         #---------------------------------------------------------------------#
-        "letterbox_image"   : True,
+        "letterbox_image"   : False,
         #-------------------------------#
         #   是否使用Cuda
         #   没有GPU可以设置成False
