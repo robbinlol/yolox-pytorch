@@ -4,6 +4,7 @@
 
 import torch
 from torch import nn
+from coordatt import CoordAtt
 
 class SiLU(nn.Module):
     @staticmethod
@@ -72,6 +73,7 @@ class SPPBottleneck(nn.Module):
         x = torch.cat([x] + [m(x) for m in self.m], dim=1)
         x = self.conv2(x)
         return x
+
 
 #--------------------------------------------------#
 #   残差结构的构建，小的残差结构
@@ -199,7 +201,8 @@ class CSPDarknet(nn.Module):
         #-----------------------------------------------#
         self.dark5 = nn.Sequential(
             Conv(base_channels * 8, base_channels * 16, 3, 2, act=act),
-            SPPBottleneck(base_channels * 16, base_channels * 16, activation=act),
+            # SPPBottleneck(base_channels * 16, base_channels * 16, activation=act),
+            CoordAtt(base_channels * 16, base_channels * 16),
             CSPLayer(base_channels * 16, base_channels * 16, n=base_depth, shortcut=False, depthwise=depthwise, act=act),
         )
 
