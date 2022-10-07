@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 
 from .darknet import BaseConv, CSPDarknet, CSPLayer, DWConv
+from .coordatt import CoordAtt
 
 
 class YOLOXHead(nn.Module):
