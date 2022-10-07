@@ -4,7 +4,7 @@
 
 import torch
 from torch import nn
-from coordatt import CoordAtt
+from .coordatt import CoordAtt
 
 class SiLU(nn.Module):
     @staticmethod
