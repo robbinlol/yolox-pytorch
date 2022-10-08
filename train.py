@@ -247,8 +247,8 @@ if __name__ == "__main__":
     #----------------------------------------------------#
     #   获得图片路径和标签
     #----------------------------------------------------#
-    train_annotation_path   = '2007_train.txt'
-    val_annotation_path     = '2007_val.txt'
+    train_annotation_path   = 'cardd_splited_train.txt'
+    val_annotation_path     = 'cardd_splited_val.txt'
 
     #------------------------------------------------------#
     #   设置用到的显卡
