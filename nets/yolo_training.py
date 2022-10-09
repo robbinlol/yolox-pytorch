@@ -17,6 +17,10 @@ class IOUloss(nn.Module):
         self.loss_type = loss_type
 
     def forward(self, pred, target):
+        '''
+            pred: [CXp, CYp, Wp, Hp]
+            target: [CXt, CYt, Wt, Ht]
+        '''
         assert pred.shape[0] == target.shape[0]
 
         pred = pred.view(-1, 4)
@@ -47,7 +51,30 @@ class IOUloss(nn.Module):
             )
             area_c = torch.prod(c_br - c_tl, 1)
             giou = iou - (area_c - area_u) / area_c.clamp(1e-16)
-            loss = 1 - giou.clamp(min=-1.0, max=1.0)
+            loss = 1 - giou.clamp(min=-1.0, max=1.0)    
+
+        elif self.loss_type == 'diou':
+            # 计算中心点距离
+            c2 = torch.sum(torch.pow(pred[:, :2] - target[:, :2], 2), dim=-1)
+            # 最小包络的斜对角线长度
+            min_left_corner = torch.min(
+            (pred[:, :2] - pred[:, 2:] / 2), (target[:, :2] - target[:, 2:] / 2)
+            )
+            max_right_coner = torch.max(
+                (pred[:, :2] + pred[:, 2:] / 2), (target[:, :2] + target[:, 2:] / 2)
+            )
+            msk = (min_left_corner < max_right_coner).type(min_left_corner.type())
+            enclose = (max_right_coner - min_left_corner) * msk
+            rho2 = torch.sum(torch.pow(enclose, 2), dim=-1)
+            loss = 1 - iou + rho2 / (c2 + 1e-16)
+
+        # ! -------------仿照实现Focal E-IOU Loss-----------
+        # ! zhihu: https://zhuanlan.zhihu.com/p/388622389
+        # ! arxiv: https://arxiv.org/pdf/2101.08158.pdf  
+        elif self.loss_type == 'focal':
+            # 1 - iou 
+            pass
+
 
         if self.reduction == "mean":
             loss = loss.mean()
@@ -63,7 +90,7 @@ class YOLOLoss(nn.Module):
         self.strides            = strides
 
         self.bcewithlog_loss    = nn.BCEWithLogitsLoss(reduction="none")
-        self.iou_loss           = IOUloss(reduction="none")
+        self.iou_loss           = IOUloss(reduction="none", loss_type='diou')
         self.grids              = [torch.zeros(1)] * len(strides)
         self.fp16               = fp16
 
