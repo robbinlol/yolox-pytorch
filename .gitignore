@@ -152,3 +152,6 @@ img/
 
 logs/
 VOCdevkit/
+cardd_splited_train.txt
+cardd_splited_val.txt
+

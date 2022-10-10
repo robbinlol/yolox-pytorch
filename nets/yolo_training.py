@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
+from distutils.command.install_egg_info import install_egg_info
 import math
 from copy import deepcopy
 from functools import partial
@@ -67,14 +68,134 @@ class IOUloss(nn.Module):
             enclose = (max_right_coner - min_left_corner) * msk
             rho2 = torch.sum(torch.pow(enclose, 2), dim=-1)
             loss = 1 - iou + rho2 / (c2 + 1e-16)
+ 
+        elif self.loss_type == 'diou_others':
+            b1_x1, b1_x2 = pred[..., 0] - pred[..., 2] / 2 , pred[..., 0] + pred[..., 2] / 2
+            b1_y1, b1_y2 = pred[..., 1] - pred[..., 3] / 2 , pred[..., 1] + pred[..., 3] / 2
+            b2_x1, b2_x2 = target[..., 0] - target[..., 2] / 2 , target[..., 0] + target[..., 2] / 2
+            b2_y1, b2_y2 = target[..., 1] - target[..., 3] / 2 , target[..., 1] + target[..., 3] / 2
+
+            box1_xy, box1_wh = pred[..., :2], pred[..., 2:4]
+            box1_wh_half = box1_wh / 2
+            box1_mines = box1_xy - box1_wh_half
+            box1_maxes = box1_xy + box1_wh_half
+
+            box2_xy, box2_wh = target[..., :2], target[..., 2:4]
+            box2_wh_half = box2_wh / 2
+            box2_mines = box2_xy - box2_wh_half
+            box2_maxes = box2_xy + box2_wh_half
+
+            intersect_mines = torch.max(box1_mines, box2_mines)
+            intersect_maxes = torch.min(box1_maxes, box2_maxes)
+            intersect_wh = torch.max(intersect_maxes - intersect_mines, torch.zeros_like(intersect_maxes))
+            intersect_area = intersect_wh[..., 0] * intersect_wh[..., 1]
+            box1_area = box1_wh[..., 0] * box1_wh[..., 1]
+            box2_area = box2_wh[..., 0] * box2_wh[..., 1]
+            union_area = box1_area + box2_area - intersect_area
+            iou_area = intersect_area / torch.clamp(union_area, min=1e-6)
+            
+            cw = torch.max(b1_x2, b2_x2) - torch.min(b1_x1, b2_x1)
+            ch = torch.max(b1_y2, b2_y2) - torch.min(b1_y1, b2_y1)
+            c2 = cw ** 2 + ch ** 2 + 1e-16
+            rho2 = ((b2_x1 + b2_x2) - (b1_x1 + b1_x2)) ** 2 / 4 + ((b2_y1 + b2_y2) - (b1_y1 + b1_y2)) ** 2 / 4
+            return 1 - iou_area + rho2 / c2
+
+        elif self.loss_type == 'ciou':
+            box1_xy, box1_wh = target[..., :2], target[..., 2:4]
+            box1_wh_half = box1_wh / 2
+            box1_mines = box1_xy - box1_wh_half
+            box1_maxes = box1_xy + box1_wh_half
+
+            box2_xy, box2_wh = pred[..., :2], pred[..., 2:4]
+            box2_wh_half = box2_wh / 2
+            box2_mines = box2_xy - box2_wh_half
+            box2_maxes = box2_xy + box2_wh_half
+            
+            intersect_mines = torch.max(box1_mines, box2_mines)
+            intersect_maxes = torch.min(box1_maxes, box2_maxes)
+            intersect_wh = torch.max(intersect_maxes - intersect_mines, torch.zeros_like(intersect_maxes))
+            intersect_area = intersect_wh[..., 0] * intersect_wh[..., 1]
+            box1_area = box1_wh[..., 0] * box1_wh[..., 1]
+            box2_area = box2_wh[..., 0] * box2_wh[..., 1]
+            union_area = box1_area + box2_area - intersect_area
+            iou_area = intersect_area / torch.clamp(union_area, min=1e-6)
+
+            center_distance = torch.sum(torch.pow(box1_xy - box2_xy, 2), dim=-1)
+            enclose_mines = torch,min(box1_mines, box2_mines)
+            enclose_maxes = torch.max(box1_maxes, box2_maxes)
+            enclose_wh = torch.max(enclose_maxes - enclose_mines, torch.zeros_like(intersect_maxes))
+
+            enclose_diagonal = torch.sum(torch.pow(enclose_wh, 2), dim=-1)
+            ciou = iou_area - 1. * center_distance / torch.clamp(enclose_diagonal, min=1e-6)
+
+            v = (4 / (math.pi ** 2)) * torch.pow((torch.atan(box1_wh[..., 0] / torch.clamp(box1_wh[..., 1], min=1e-6)) - torch.atan(box2_wh[..., 0] / torch.clamp(box2_wh[..., 1], min=1e-6))), 2)
+            alpha = v / torch.clamp((1. - iou_area + v), min=1e-6)
+            return 1 - ciou + alpha * v
 
         # ! -------------仿照实现Focal E-IOU Loss-----------
         # ! zhihu: https://zhuanlan.zhihu.com/p/388622389
-        # ! arxiv: https://arxiv.org/pdf/2101.08158.pdf  
+        # ! arxiv: https://arxiv.org/pdf/2101.08158.pdf 
         elif self.loss_type == 'focal':
-            # 1 - iou 
-            pass
+            # iou^gamma * Leiou
+            c_tl = torch.min(
+                (pred[:, :2] - pred[:, 2:] / 2), (target[:, :2] - target[:, 2:] / 2)
+            )
+            c_br = torch.max(
+                (pred[:, :2] + pred[:, 2:] / 2), (target[:, :2] + target[:, 2:] / 2)
+            )
+            convex_dis = torch.pow(c_br[:, 0] - c_tl[:, 0], 2) + torch.pow(c_br[:, 1] - c_tl[:,1], 2)  # 外接矩形对角线的平方
 
+            center_dis = (torch.pow(pred[:, 0]-target[:, 0], 2) + torch.pow(pred[:, 1]-target[:,1], 2))  # 两个框中心距离平方
+
+            dis_w = torch.pow(pred[:, 2]-target[:, 2], 2)  # 两个框的w欧式距离
+            dis_h = torch.pow(pred[:, 3]-target[:, 3], 2)  # 两个框的h欧式距离
+
+            C_w = torch.pow(c_tl[:, 0]-c_br[:, 0], 2) # 包围框的w平方
+            C_h = torch.pow(c_tl[:, 1]-c_br[:, 1], 2)  # 包围框的h平方
+
+            eiou = iou - (center_dis / convex_dis.clamp(1e-16)) - (dis_w / C_w.clamp(1e-16)) - (dis_h / C_h.clamp(1e-16))
+
+            # !loss = 1 - eiou.clamp(min=-1.0, max=1.0)
+            # focal eiou loss
+            gamma = 0.5
+            return (eiou ** gamma) * eiou
+
+            # b1_x1, b1_x2 = pred[..., 0] - pred[..., 2] / 2 , pred[..., 0] + pred[..., 2] / 2
+            # b1_y1, b1_y2 = pred[..., 1] - pred[..., 3] / 2 , pred[..., 1] + pred[..., 3] / 2
+            # b2_x1, b2_x2 = target[..., 0] - target[..., 2] / 2 , target[..., 0] + target[..., 2] / 2
+            # b2_y1, b2_y2 = target[..., 1] - target[..., 3] / 2 , target[..., 1] + target[..., 3] / 2
+
+            # box1_xy, box1_wh = pred[..., :2], pred[..., 2:4]
+            # box1_wh_half = box1_wh / 2
+            # box1_mines = box1_xy - box1_wh_half
+            # box1_maxes = box1_xy + box1_wh_half
+
+            # box2_xy, box2_wh = target[..., :2], target[..., 2:4]
+            # box2_wh_half = box2_wh / 2
+            # box2_mines = box2_xy - box2_wh_half
+            # box2_maxes = box2_xy + box2_wh_half
+
+            # intersect_mines = torch.max(box1_mines, box2_mines)
+            # intersect_maxes = torch.min(box1_maxes, box2_maxes)
+            # intersect_wh = torch.max(intersect_maxes - intersect_mines, torch.zeros_like(intersect_maxes))
+            # intersect_area = intersect_wh[..., 0] * intersect_wh[..., 1]
+            # box1_area = box1_wh[..., 0] * box1_wh[..., 1]
+            # box2_area = box2_wh[..., 0] * box2_wh[..., 1]
+            # union_area = box1_area + box2_area - intersect_area
+            # iou_area = intersect_area / torch.clamp(union_area, min=1e-6)
+            
+            # cw = torch.max(b1_x2, b2_x2) - torch.min(b1_x1, b2_x1)
+            # ch = torch.max(b1_y2, b2_y2) - torch.min(b1_y1, b2_y1)
+            # c2 = cw ** 2 + ch ** 2 + 1e-16
+
+            # rho_c2 = ((b2_x1 + b2_x2) - (b1_x1 + b1_x2)) ** 2 / 4 + ((b2_y1 + b2_y2) - (b1_y1 + b1_y2)) ** 2 / 4
+            # w_gt, w = target[:, 2], pred[:, 2]
+            # h_gt, h = target[:, 3], pred[:, 3]
+            # rho_w2 = torch.pow((w_gt - w), 2)
+            # rho_h2 = torch.pow((h_gt - h), 2)
+            # eiou = 1 - iou + rho_c2 / c2 + rho_w2 / torch.clamp(torch.pow(cw, 2), min=1e-16) + rho_h2 / torch.clamp(torch.pow(ch, 2), min=1e-16)
+            # gamma = 0.5
+            # return (iou ** gamma) * eiou
 
         if self.reduction == "mean":
             loss = loss.mean()
