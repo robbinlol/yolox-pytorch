@@ -153,7 +153,8 @@ class IOUloss(nn.Module):
             C_w = torch.pow(c_tl[:, 0]-c_br[:, 0], 2) # 包围框的w平方
             C_h = torch.pow(c_tl[:, 1]-c_br[:, 1], 2)  # 包围框的h平方
 
-            eiou = iou - (center_dis / convex_dis.clamp(1e-16)) - (dis_w / C_w.clamp(1e-16)) - (dis_h / C_h.clamp(1e-16))
+            #eiou = iou - (center_dis / convex_dis.clamp(1e-16)) - (dis_w / C_w.clamp(1e-16)) - (dis_h / C_h.clamp(1e-16))
+            eiou = 1 - iou + (center_dis / convex_dis.clamp(1e-16)) + (dis_w / C_w.clamp(1e-16)) + (dis_h / C_h.clamp(1e-16))
 
             # !loss = 1 - eiou.clamp(min=-1.0, max=1.0)
             # focal eiou loss
@@ -255,6 +256,15 @@ class YOLOLoss(nn.Module):
         output[..., 2:4]    = torch.exp(output[..., 2:4]) * stride
         return output, grid
 
+    def focal_loss(self, pred, gt):
+        pos_inds = gt.eq(1).float()
+        neg_inds = gt.eq(0).float()
+        pos_loss = torch.log(pred + 1e-5) * torch.pow(1 - pred, 2) * pos_inds * 0.75
+        neg_loss = torch.log(1 - pred + 1e-5) * torch.pow(pred, 2) * neg_inds * 0.25
+        loss = -(pos_loss + neg_loss)
+        return loss
+
+
     def get_losses(self, x_shifts, y_shifts, expanded_strides, labels, outputs):
         #-----------------------------------------------#
         #   [batch, n_anchors_all, 4]
@@ -328,6 +338,10 @@ class YOLOLoss(nn.Module):
         num_fg      = max(num_fg, 1)
         loss_iou    = (self.iou_loss(bbox_preds.view(-1, 4)[fg_masks], reg_targets)).sum()
         loss_obj    = (self.bcewithlog_loss(obj_preds.view(-1, 1), obj_targets)).sum()
+
+        # ! focal loss
+        # loss_obj    = (obj_preds.sigmoid().view(-1, 1), obj_targets).sum()
+        
         loss_cls    = (self.bcewithlog_loss(cls_preds.view(-1, self.num_classes)[fg_masks], cls_targets)).sum()
         reg_weight  = 5.0
         loss = reg_weight * loss_iou + loss_obj + loss_cls
