@@ -6,7 +6,7 @@ datasets/
 Medical_Datasets/
 lfw/
 logs/
-model_data/
+# model_data/
 .temp_map_out/
 
 # Byte-compiled / optimized / DLL files
@@ -155,3 +155,14 @@ VOCdevkit/
 cardd_splited_train.txt
 cardd_splited_val.txt
 
+*.pth
+#
+000079.jpg
+000148.jpg
+000452.jpg
+000696.jpg
+001043.jpg
+001746.jpg
+
+result/
+.vscode/
